@@ -1,9 +1,10 @@
+require "TCM/Bootstrap"
+do return end
+
 --- @filename TCMusicClientFunctions.lua
 
 require "TCMusicDefenitions"
-if TCM and TCM.__inv_context_loaded then return end
-TCM = TCM or {}
-TCM.__inv_context_loaded = true
+
 --- Поиск WO-бумбокса вокруг Item-бумбокса и запись ссылки на него в ModData
 -- @param _item - Item-бумбокс
 -- @param dx - дельта по x

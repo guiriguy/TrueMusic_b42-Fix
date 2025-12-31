@@ -1,8 +1,9 @@
+require "TCM/Bootstrap"
+do return end
+
 require "TCMusicDefenitions"
-TCM = TCM or {}
-if TCM.__world_context_loaded then return end
-TCM.__world_context_loaded = true
 function TCFillContextMenu(player, context, worldobjects, test)
+    print("TTTTTT")
     if test and ISWorldObjectContextMenu.Test then
         return true;
     end

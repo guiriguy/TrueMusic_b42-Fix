@@ -11,10 +11,10 @@ ISTCBoomboxWindow = ISCollapsableWindow:derive("ISTCBoomboxWindow");
 ISTCBoomboxWindow.instances = {};
 ISTCBoomboxWindow.instancesIso = {};
 
-function ISTCBoomboxWindow.activate( _player, _deviceObject )
--- print("ISTCBoomboxWindow.activate")
+function ISTCBoomboxWindow.activate(_player, _deviceObject)
+    -- print("ISTCBoomboxWindow.activate")
     local playerNum = _player:getPlayerNum();
-    
+
     local radioWindow, instances;
     _player:setVariable("ExerciseStarted", false);
     _player:setVariable("ExerciseEnded", true);
@@ -25,29 +25,30 @@ function ISTCBoomboxWindow.activate( _player, _deviceObject )
         instances = ISTCBoomboxWindow.instances;
     end
 
-    if instances[ playerNum ] then
-        radioWindow = instances[ playerNum ];
+    if instances[playerNum] then
+        radioWindow = instances[playerNum];
         --radioWindow:initialise();
     else
-        radioWindow = ISTCBoomboxWindow:new (100, 100, 300, 500, _player);
+        radioWindow = ISTCBoomboxWindow:new(100, 100, 300, 500, _player);
         radioWindow:initialise();
         radioWindow:instantiate();
         ISLayoutManager.enableLog = true;
         if playerNum == 0 then
-            ISLayoutManager.RegisterWindow('radiotelevision'..(_isIso and "Iso" or ""), ISCollapsableWindow, radioWindow);
+            ISLayoutManager.RegisterWindow('radiotelevision' .. (_isIso and "Iso" or ""), ISCollapsableWindow,
+                radioWindow);
         end
         ISLayoutManager.enableLog = false;
-        instances[ playerNum ] = radioWindow;
+        instances[playerNum] = radioWindow;
     end
 
     --radioWindow.isJoypadWindow = JoypadState.players[playerNum+1] and true or false;
 
-    radioWindow:readFromObject( _player, _deviceObject );
+    radioWindow:readFromObject(_player, _deviceObject);
     radioWindow:addToUIManager();
     radioWindow:setVisible(true);
 
     --radioWindow:setJoypadPrompt();
-    if JoypadState.players[playerNum+1] then
+    if JoypadState.players[playerNum + 1] then
         if getFocusForPlayer(playerNum) then getFocusForPlayer(playerNum):setVisible(false); end
         if getPlayerInventory(playerNum) then getPlayerInventory(playerNum):setVisible(false); end
         if getPlayerLoot(playerNum) then getPlayerLoot(playerNum):setVisible(false); end
@@ -61,12 +62,12 @@ function ISTCBoomboxWindow:initialise()
     ISCollapsableWindow.initialise(self);
 end
 
-function ISTCBoomboxWindow:addModule( _modulePanel, _moduleName, _enable )
+function ISTCBoomboxWindow:addModule(_modulePanel, _moduleName, _enable)
     local module = {};
     module.enabled = _enable;
     --module.panel = _modulePanel;
     --module.name = _moduleName;
-    module.element = RWMElement:new (0, 0, self.width, 0, _modulePanel, _moduleName, self);
+    module.element = RWMElement:new(0, 0, self.width, 0, _modulePanel, _moduleName, self);
     table.insert(self.modules, module);
     self:addChild(module.element);
 end
@@ -77,69 +78,70 @@ function ISTCBoomboxWindow:createChildren()
 
     --self:addModule(RWMSignal:new (0, 0, self.width, 0 ), "Signal", false);
     -- self:addModule(RWMGeneral:new (0, 0, self.width, 0), getText("IGUI_RadioGeneral"), true);
-    self:addModule(TCRWMPower:new (0, 0, self.width, 0), getText("IGUI_RadioPower"), true);
-    self:addModule(TCRWMGridPower:new (0, 0, self.width, 0), getText("IGUI_RadioPower"), true);
+    self:addModule(TCRWMPower:new(0, 0, self.width, 0), getText("IGUI_RadioPower"), true);
+    self:addModule(TCRWMGridPower:new(0, 0, self.width, 0), getText("IGUI_RadioPower"), true);
     -- self:addModule(RWMSignal:new (0, 0, self.width, 0), getText("IGUI_RadioSignal"), true);
-    self:addModule(TCRWMVolume:new (0, 0, self.width, 0), getText("IGUI_RadioVolume"), true);
+    self:addModule(TCRWMVolume:new(0, 0, self.width, 0), getText("IGUI_RadioVolume"), true);
     -- self:addModule(RWMMicrophone:new (0, 0, self.width, 0), getText("IGUI_RadioMicrophone"), true);
-    self:addModule(TCRWMMedia:new (0, 0, self.width, 0 ), getText("IGUI_RadioMedia"), true);
+    self:addModule(TCRWMMedia:new(0, 0, self.width, 0), getText("IGUI_RadioMedia"), true);
     -- self:addModule(RWMChannel:new (0, 0, self.width, 0 ), getText("IGUI_RadioChannel"), true);
     -- self:addModule(RWMChannelTV:new (0, 0, self.width, 0 ), getText("IGUI_RadioChannel"), true);
-
 end
 
 local dist = 4;
 function ISTCBoomboxWindow:update()
--- print("ISTCBoomboxWindow:update")
     ISCollapsableWindow.update(self);
-    if self:getIsVisible() then
-        if self.deviceData and self.deviceType == "VehiclePart" then
-            local part = self.deviceData:getParent()
-            if part and part:getItemType() and not part:getItemType():isEmpty() and not part:getInventoryItem() then
-                self:close()
-                return
-            end
-        end
 
-        if self.deviceType and self.device and self.character and self.deviceData then
-            if self.deviceType=="InventoryItem" then -- incase of inventory item check if player has it in a hand
-                if -- self.character:getPrimaryHandItem() == self.device or 
-                    self.character:getSecondaryHandItem() == self.device or 
-                    (TCMusic.WalkmanPlayer[self.device:getFullType()] and self.device:getContainer() == self.character:getInventory()) then
-                    return;
-                end
-            elseif self.deviceType == "IsoObject" or self.deviceType == "VehiclePart" then -- incase of isoobject check distance.
-                if self.device:getSquare() and self.character:getX() > self.device:getX()-dist and self.character:getX() < self.device:getX()+dist and self.character:getY() > self.device:getY()-dist and self.character:getY() < self.device:getY()+dist then
+    if not self:getIsVisible() then
+        return;
+    end
+
+    -- If it's a car and the part has dissapeared then we close
+    if self.deviceData and self.deviceType == "VehiclePart" then
+        local part = self.deviceData:getParent();
+        if part and part:getItemType() and not part:getItemType():isEmpty() and not part:getInventoryItem() then
+            self:close();
+            return;
+        end
+    end
+
+    if self.deviceType and self.device and self.character and self.deviceData then
+        if self.deviceType == "InventoryItem" then
+            local inv = self.character:getInventory();
+            local container = self.device:getContainer();
+
+            local inHands =
+                (self.character:getPrimaryHandItem() == self.device) or
+                (self.character:getSecondaryHandItem() == self.device);
+
+            local inInventory =
+                (inv ~= nil) and (container ~= nil) and (container == inv);
+
+            if inHands or inInventory then
+                return;
+            end
+        elseif self.deviceType == "IsoObject" or self.deviceType == "VehiclePart" then
+            if self.device.getSquare and self.device:getSquare() then
+                if self.character:getX() > self.device:getX() - dist and self.character:getX() < self.device:getX() + dist
+                    and self.character:getY() > self.device:getY() - dist and self.character:getY() < self.device:getY() + dist then
                     return;
                 end
             end
         end
     end
 
-    if self.deviceData and self.deviceType=="InventoryItem" and
-        ( -- self.character:getPrimaryHandItem() ~= self.device and 
-        self.character:getSecondaryHandItem() ~= self.device) then        -- conveniently turn off radio when unequiped to prevent accidental loss of power.
-        -- print("TURN OFF")
-        self.device:getModData().tcmusic.isPlaying = false;
-        self.deviceData:setIsTurnedOn(false);
-    end
-
-    -- otherwise remove
-    -- print("ISTCBoomboxWindow:update() close")
-    self:close();
-    --self:clear();
-    --self:removeFromUIManager();
+    self:close()
 end
 
 function ISTCBoomboxWindow:prerender()
     self:stayOnSplitScreen();
     ISCollapsableWindow.prerender(self);
     local cnt = 0;
-    local ymod = self:titleBarHeight()+1;
-    for i=1,#self.modules do
+    local ymod = self:titleBarHeight() + 1;
+    for i = 1, #self.modules do
         if self.modules[i].enabled then
             self.modules[i].element:setY(ymod);
-            ymod = ymod + self.modules[i].element:getHeight()+1;
+            ymod = ymod + self.modules[i].element:getHeight() + 1;
         else
             self.modules[i].element:setVisible(false);
         end
@@ -153,7 +155,6 @@ end
 function ISTCBoomboxWindow:stayOnSplitScreen()
     ISUIElement.stayOnSplitScreen(self, self.characterNum)
 end
-
 
 function ISTCBoomboxWindow:render()
     --self:setJoypadPrompt();
@@ -169,10 +170,10 @@ function ISTCBoomboxWindow:onGainJoypadFocus(joypadData)
 end
 
 function ISTCBoomboxWindow:close()
--- print("ISTCBoomboxWindow:close()")
+    -- print("ISTCBoomboxWindow:close()")
     ISCollapsableWindow.close(self);
-    if JoypadState.players[self.characterNum+1] then
-        if getFocusForPlayer(self.characterNum)==self or (self.subFocus) then
+    if JoypadState.players[self.characterNum + 1] then
+        if getFocusForPlayer(self.characterNum) == self or (self.subFocus) then
             setJoypadFocus(self.characterNum, nil);
         end
     end
@@ -182,21 +183,21 @@ function ISTCBoomboxWindow:close()
 end
 
 function ISTCBoomboxWindow:clear()
--- print("ISTCBoomboxWindow:clear()")
+    -- print("ISTCBoomboxWindow:clear()")
     self.drawJoypadFocus = false;
     self.character = nil;
     self.device = nil;
     self.deviceData = nil;
     self.deviceType = nil;
     self.hotKeyPanels = {};
-    for i=1,#self.modules do
+    for i = 1, #self.modules do
         self.modules[i].enabled = false;
         self.modules[i].element:clear();
     end
 end
 
 -- read from item/object and set modules
-function ISTCBoomboxWindow:readFromObject( _player, _deviceObject )
+function ISTCBoomboxWindow:readFromObject(_player, _deviceObject)
     -- print("ISTCBoomboxWindow:readFromObject")
     self:clear();
     self.character = _player;
@@ -232,7 +233,8 @@ function ISTCBoomboxWindow:readFromObject( _player, _deviceObject )
                     mediaItemName = self.device:getModData().tcmusic.mediaItem
                     isPlaying = self.device:getModData().tcmusic.isPlaying
                 end
-                sendClientCommand(self.character, 'truemusic', 'setMediaItemToVehiclePart', { vehicle = self.device:getVehicle():getId(), mediaItem = mediaItemName, isPlaying = isPlaying })
+                sendClientCommand(self.character, 'truemusic', 'setMediaItemToVehiclePart',
+                    { vehicle = self.device:getVehicle():getId(), mediaItem = mediaItemName, isPlaying = isPlaying })
             end
         end
     end
@@ -242,15 +244,16 @@ function ISTCBoomboxWindow:readFromObject( _player, _deviceObject )
         return;
     end
 
-    for i=1,#self.modules do
-        self.modules[i].enabled = self.modules[i].element:readFromObject(self.character, self.device, self.deviceData, self.deviceType);
+    for i = 1, #self.modules do
+        self.modules[i].enabled = self.modules[i].element:readFromObject(self.character, self.device, self.deviceData,
+            self.deviceType);
         self.modules[i].element:setVisible(self.modules[i].enabled);
         if self.modules[i].enabled then
-            if self.modules[i].element.titleText==getText("IGUI_RadioPower") then -- or self.modules[i].element.titleText=="GridPower" then
+            if self.modules[i].element.titleText == getText("IGUI_RadioPower") then -- or self.modules[i].element.titleText=="GridPower" then
                 self.hotKeyPanels.power = self.modules[i].element.subpanel;
-            elseif self.modules[i].element.titleText==getText("IGUI_RadioVolume") then
+            elseif self.modules[i].element.titleText == getText("IGUI_RadioVolume") then
                 self.hotKeyPanels.volume = self.modules[i].element.subpanel;
-            elseif self.modules[i].element.titleText==getText("IGUI_RadioMicrophone") then
+            elseif self.modules[i].element.titleText == getText("IGUI_RadioMicrophone") then
                 self.hotKeyPanels.microphone = self.modules[i].element.subpanel;
             end
         end
@@ -283,19 +286,19 @@ end
 
 local interval = 20;
 function ISTCBoomboxWindow:onJoypadDirUp()
-    self:setY(self:getY()-interval);
+    self:setY(self:getY() - interval);
 end
 
 function ISTCBoomboxWindow:onJoypadDirDown()
-    self:setY(self:getY()+interval);
+    self:setY(self:getY() + interval);
 end
 
 function ISTCBoomboxWindow:onJoypadDirLeft()
-    self:setX(self:getX()-interval);
+    self:setX(self:getX() - interval);
 end
 
 function ISTCBoomboxWindow:onJoypadDirRight()
-    self:setX(self:getX()+interval);
+    self:setX(self:getX() + interval);
 end
 
 function ISTCBoomboxWindow:onJoypadDown(button)
@@ -316,28 +319,33 @@ end
 
 function ISTCBoomboxWindow:getAPrompt()
     if self.hotKeyPanels.power then
-        return getText("IGUI_Hotkey")..": "..self.hotKeyPanels.power:getAPrompt();
+        return getText("IGUI_Hotkey") .. ": " .. self.hotKeyPanels.power:getAPrompt();
     end
     return nil;
 end
+
 function ISTCBoomboxWindow:getBPrompt()
     return getText("IGUI_RadioClose");
 end
+
 function ISTCBoomboxWindow:getXPrompt()
     if self.hotKeyPanels.microphone then
-        return getText("IGUI_Hotkey")..": "..self.hotKeyPanels.microphone:getAPrompt();
+        return getText("IGUI_Hotkey") .. ": " .. self.hotKeyPanels.microphone:getAPrompt();
     end
     return nil;
 end
+
 function ISTCBoomboxWindow:getYPrompt()
     if self.hotKeyPanels.volume then
-        return getText("IGUI_Hotkey")..": "..self.hotKeyPanels.volume:getYPrompt();
+        return getText("IGUI_Hotkey") .. ": " .. self.hotKeyPanels.volume:getYPrompt();
     end
     return nil;
 end
+
 function ISTCBoomboxWindow:getLBPrompt()
     return getText("IGUI_RadioReleaseFocus");
 end
+
 function ISTCBoomboxWindow:getRBPrompt()
     return getText("IGUI_RadioSelectInner");
 end
@@ -361,15 +369,15 @@ function ISTCBoomboxWindow:focusNext(_up)
     local last = nil;
     local found = false;
     local nextFocus = nil;
-    for i=1,#self.modules do
+    for i = 1, #self.modules do
         if self.modules[i].enabled then
             if not first then first = self.modules[i]; end
             if found and not _up and not nextFocus then
                 nextFocus = self.modules[i];
             end
-            if self.subFocus and self.subFocus==self.modules[i] then
+            if self.subFocus and self.subFocus == self.modules[i] then
                 found = true;
-                if last~=nil and _up then
+                if last ~= nil and _up then
                     nextFocus = last;
                 end
             end
@@ -387,7 +395,7 @@ function ISTCBoomboxWindow:focusNext(_up)
 end
 
 --hocus pocus set subfocus
-function ISTCBoomboxWindow:setSubFocus( _newFocus )
+function ISTCBoomboxWindow:setSubFocus(_newFocus)
     --print("subfocus "..tostring(_newFocus))
     if not _newFocus or not _newFocus.element then
         self:focusSelf();
@@ -397,7 +405,7 @@ function ISTCBoomboxWindow:setSubFocus( _newFocus )
     end
 end
 
-function ISTCBoomboxWindow:new (x, y, width, height, player)
+function ISTCBoomboxWindow:new(x, y, width, height, player)
     local o = {}
     --o.data = {}
     o = ISCollapsableWindow:new(x, y, width, height);
@@ -407,8 +415,8 @@ function ISTCBoomboxWindow:new (x, y, width, height, player)
     o.y = y;
     o.character = player;
     o.characterNum = player:getPlayerNum();
-    o.borderColor = {r=0.4, g=0.4, b=0.4, a=1};
-    o.backgroundColor = {r=0, g=0, b=0, a=0.8};
+    o.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 };
+    o.backgroundColor = { r = 0, g = 0, b = 0, a = 0.8 };
     o.width = width;
     o.height = height;
     o.anchorLeft = true;

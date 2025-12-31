@@ -1,9 +1,10 @@
+require "TCM/Bootstrap"
+do return end
+
 require "TCMusicDefenitions"
 ISInventoryMenuElements = ISInventoryMenuElements or {};
-if TCM and TCM.__inv_context_loaded then return end
-TCM = TCM or {}
-TCM.__inv_context_loaded = true
 function ISInventoryMenuElements.ContextBoombox()
+    print("TTTTTT")
     local self = ISMenuElement.new();
     self.invMenu = ISContextManager.getInstance().getInventoryMenu();
     function self.init()
