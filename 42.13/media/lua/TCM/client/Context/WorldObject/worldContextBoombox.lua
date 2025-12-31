@@ -1,4 +1,7 @@
 require "TCMusicDefenitions"
+TCM = TCM or {}
+if TCM.__world_context_loaded then return end
+TCM.__world_context_loaded = true
 function TCFillContextMenu(player, context, worldobjects, test)
     if test and ISWorldObjectContextMenu.Test then
         return true;
@@ -50,11 +53,13 @@ function TCFillContextMenu(player, context, worldobjects, test)
         for _, square in ipairs(squares2) do
             if square and context.x and context.y and square.getZ then
                 local success, worldX, worldY = pcall(function()
-                    return screenToIsoX(playerNum, context.x, context.y, square:getZ()), screenToIsoY(playerNum, context.x, context.y, square:getZ());
+                    return screenToIsoX(playerNum, context.x, context.y, square:getZ()),
+                        screenToIsoY(playerNum, context.x, context.y, square:getZ());
                 end);
                 if success then
                     if ISWorldObjectContextMenu.getSquaresInRadius then
-                        ISWorldObjectContextMenu.getSquaresInRadius(worldX, worldY, square:getZ(), radius, doneSquare, squares);
+                        ISWorldObjectContextMenu.getSquaresInRadius(worldX, worldY, square:getZ(), radius, doneSquare,
+                            squares);
                     end
                 end
             end
@@ -148,13 +153,14 @@ function TCFillContextMenu(player, context, worldobjects, test)
                 end
                 if obj then
                     context:addOptionOnTop(
-                        getText("IGUI_DeviceOptions"), 
+                        getText("IGUI_DeviceOptions"),
                         playerObj, ISInventoryMenuElements.ContextRadio().createMenu(obj));
                 end
             end
         end
     end
 end
+
 if TCFillContextMenu then
     Events.OnFillWorldObjectContextMenu.Add(TCFillContextMenu);
 end

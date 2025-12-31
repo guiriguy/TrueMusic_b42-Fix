@@ -1,10 +1,14 @@
 require "TCMusicDefenitions"
 ISInventoryMenuElements = ISInventoryMenuElements or {};
+if TCM and TCM.__inv_context_loaded then return end
+TCM = TCM or {}
+TCM.__inv_context_loaded = true
 function ISInventoryMenuElements.ContextBoombox()
     local self = ISMenuElement.new();
     self.invMenu = ISContextManager.getInstance().getInventoryMenu();
     function self.init()
     end
+
     function self.createMenu(_item)
         if getCore():getGameMode() == "Tutorial" then
             return;
@@ -50,18 +54,22 @@ function ISInventoryMenuElements.ContextBoombox()
                 end
             end
             if _obj ~= nil then
-                local option = self.invMenu.context:addOptionOnTop(getText("IGUI_DeviceOptions"), self.invMenu, self.openPanel, _obj);
+                local option = self.invMenu.context:addOptionOnTop(getText("IGUI_DeviceOptions"), self.invMenu,
+                    self.openPanel, _obj);
                 option.itemForTexture = _item
             end
         end
     end
+
     function self.openPanel(_p, _item)
         if ISRadioWindow and ISRadioWindow.activate then
             ISRadioWindow.activate(_p.player, _item, true);
         end
     end
+
     return self;
 end
+
 if ISInventoryMenuElements.ContextBoombox then
     Events.OnFillInventoryObjectContextMenu.Add(function(player, context, items)
         local boomboxContext = ISInventoryMenuElements.ContextBoombox();
