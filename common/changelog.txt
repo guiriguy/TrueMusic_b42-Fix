@@ -1,0 +1,193 @@
+v.2.15
+2023-02-19
+
+Отключена возможность дюпа кассет/винала с помощью контейнера.
+Исправлена ошибка с контроллером (спасибо @Burryaga).
+Исправлена ошибка с произвольным отключением музыки в мультиплеере.
+Исправлена ошибка связанная с застреванием кассеты при отключении аддона.
+Добавлены рецепты для разбора плееров.
+
+Disabled the ability to duplicate tapes/vinyl using a container.
+Fixed bug with controller (thanks to @Burryaga).
+Fixed bug with random disabling of music in multiplayer.
+Corrected a tape/vinyl stuck when the addon is switched off.
+Added recipes for player disassembly.
+
+-------------------
+v.2.14
+2023-01-22
+
+Ты нашёл в Америке рай: у тебя был бумбокс, у тебя был виниловый проигрыватель и тебе не нужны были такие друзья, как я. А тут тебе понадобился карманный плеер и ты приходишь и говоришь: Дон iBrRus, мне нужен Walkman. Но ты не просишь с уважением, не подписываешься на Boosty, даже не думаешь поставить лайк этому моду. Однажды, хоть этот день может никогда не наступить, я попрошу вас задонатить мне, а до тех пор прими этот Sany Wutman, как подарок в день свадьбы какой-нибудь дочери.
+
+
+You found paradise in America, you had a boombox, you had a vinyl player. You didn't need a friend like me. But, now you need a portable player and you come to me, and you say: "Don iBrRus, give me Walkman." But you don't ask with respect. You don't subscribe to Patreon. You don't even think to give this mod a like. Someday—and that day may never come—I'll call upon you to donate to me. But until that day, accept this Sany Wutman as a gift on any daughter's wedding day.
+
+Добавлен карманный проигрыватель "Sany Wutman".
+Исправлена ошибка, возникающая при изменении громкости проигрывателя в автомобиле.
+Исправлена ошибка, из-за которой музыка не отключалась при выключении проигрывателя или извлечения батарейки.
+Исправлена ошибка, из-за которой наушники пропадали после размещения бумбокса на земле.
+
+A pocket player "Sany Wutman" has been added.
+Fixed a bug that occurs when you change the volume of the player in the car.
+Fixed a bug that caused the music to not turn off when the player is switched off or the battery is removed.
+Fixed a bug that caused the headphones to disappear after the boom box was placed on the ground.
+
+-------------------
+v.2.13
+2023-01-03
+
+Я так и не понял, почему этот мод работал до версии 2.12. Наверное, это была какая-то магия. Но в этот раз, чтобы исправить все ошибки, мне пришлось переписать половину кода.
+
+I still haven't figured out why this mod worked before version 2.12. There must have been some magic involved. But this time, I had to rewrite half the code to fix all the bugs.
+
+-------------------
+v.2.12
+2023-01-01
+
+Исправлены 3д-модели музыкальных проигрывателей (спасибо ckyb).
+Исправлен текст всплывающего меню при установки кассеты или винила (спасибо ckyb).
+Bugfix: в одиночной игре для локального игрока не контролировался момент отключения музыки.
+Bugfix: кассеты можно было включать не во всех автомобилях.
+Bugfix: кассета пропадала при установке ей в магнитолу автомобиля.
+Bugfix: если игрок выбрасывал включенный бумбокс, зомби продолжали агриться на игрока.
+Bugfix: при размещении нескольких проигрыватель в одной ячейке, в контекстном меню появлялся пункт управления только одним из проигрывателей.
+Bugfix: если извлечь пластинку во время воспроизведения музыки, появлялась ошибка.
+Bugfix: если взорвать или поджечь бумбокс, музыка останавливалась, а зомби продолжали приманиваться к точке.
+Улучшен генератор аддонов: уменьшен шанс спавна кассет и винила, добавлен спавн в бардачке автомобилей, добавлены новые типы контейнеров для спавна.
+
+Fixed 3D models of music players (thanks to ckyb).
+Fixed pop-up menu text when installing cassette or vinyl (thanks to ckyb).
+Bugfix: in single player local player game, the moment the music was turned off was not controlled.
+Bugfix: cassettes could not be enabled in all vehicles.
+Bugfix: a cassette tape was lost when it was inserted into a car stereo.
+Bugfix: if a player threw a boombox on, zombies kept aggroing at the player.
+Bugfix: if multiple players are placed in the same cell, the context menu would only appear to control one of the players.
+Bugfix: if ejecting a record while playing music, an error would appear.
+Bugfix: if you blow up or set fire to a boombox, the music would stop and zombies would continue to be lured to the point.
+Improved addon generator: reduced chance of cassettes and vinyl spawn, added car glovebox spawn, added new types of containers for spawn.
+
+-------------------
+v.2.11
+2022-08-16
+
+Исправлена ошибка с появлением неправильного меню бумбокса при активации с земли.
+Исправлена ошибка в таблице спавна предметов.
+Добавлены дополнительные проверки исключений.
+
+Fixed bug with appearance of wrong boombox menu when activating from the ground.
+Fixed bug in the item spawn table.
+Added additional exception checks.
+
+-------------------
+v.2.10
+2022-01-20
+
+Перенесены переводы в tsarslib.
+Исправлена ошибка связанная с увеличением громкости музыки при открытии окна автомобиля.
+Исправлена ошибка позволяющая дубликовать кассеты при помощи бардачка.
+Исправлена ошибка позволяющая дубликовать батарейки при помощи бумбокса.
+Исправлена ошибка из-за которой в мире мог появиться невидимый проигрыватель.
+
+Moved translations to tsarslib.
+Fixed bug related to music volume increase when opening car window.
+Fixed a bug with duplicate cassettes using a glove box.
+Fixed a bug with duplicate batteries using a boombox.
+Fixed a bug that could cause an invisible music player to appear in the world.
+
+-------------------
+v.2.09
+2021-12-26
+
+Синхронизирована музыка в мультиплеере.
+Добавлено влияние наушников на то, слышат ли музыку другие игроки.
+Убрана необходимость использования динамиков для винилового проигрывателя.
+Добавлено влияние открытых/разбитых окон автомобиля на громкость музыки и приманивание зомби.
+Заблокирована возможность включения игроком двух бумбоксов одновремено (из инвентаря).
+Добавлен рандомный спавн кассет и пластинок в разных типах контейнеров.
+Добавлены расширенные настройки звуков для регулировки громкости каждой песни.
+
+Synchronized music in multiplayer.
+Added the effect of headphones on whether another players can hear the music.
+Removed the need for speakers for the vinyl player.
+Added effect of open/broken car windows on music volume and zombie baiting.
+Blocked possibility for player to turn on two boomboxes at the same time (from inventory).
+Added random spawn of cassettes and vinyls in different types of containers.
+Added advanced sound settings to adjust the volume of each song.
+
+-------------------
+
+v.2.08
+
+Исправлена ошибка из-за которой нельзя было отключить громкость одним нажанием.
+Отключена лишняя опция в контекстном меню винилового проигрывателя.
+
+Fixed a bug that made it impossible to turn off the volume with one touch.
+Disabled unnecessary option in the context menu for vinyl player.
+
+-------------------
+
+v.2.07
+
+Устранена несовместимость с Hydrocraft из-за которой бумбокс и виниловый проигрыватель, размещенные на земле, не работали.
+Отключена лишняя опция в контекстном меню бумбокса.
+Музыка, добавленная игроком, перенесена в категорию "Окружение", чтобы дать возможность отключать ванильную музыку.
+Добавлены уточнения в readme.txt
+
+Fixed an incompatibility with Hydrocraft that caused a boombox and vinyl player placed on the ground to not work.
+Disabled unnecessary option in the context menu for boombox.
+The music added by player has been moved to the "Ambient" category to allow to turn off vanilla music.
+Added clarifications to readme.txt
+
+-------------------
+
+v.2.06
+
+Исправлена ошибка связанная с воспроизведением музыки в машине после изъятия кассеты.
+
+Fixed a bug related to playing music in the car after removing the cassette.
+
+-------------------
+
+v.2.05
+
+При включении музыки в машине, радио отключается.
+Убрано дрожание музыки во время езды в автомобиле.
+
+When you turn on the music in the car, the radio turns off.
+Removed the jitter of music while driving in a car.
+
+-------------------
+
+v.2.04
+
+Улучшено приманивание зомби. Очень сильно улучшено! Будьте осторожны!
+
+Improved luring zombies. Very much improved! Be careful!
+
+-------------------
+
+v.2.03
+
+Исправлена ошибка, связанная с невозможностью подключения колонок на верхних этажах зданий.
+
+Fixed a bug related to the impossibility of connecting the speakers on the upper floors of buildings.
+
+-------------------
+
+v.2.02
+
+Добавлен архив в формате rar.
+
+Added archive in rar format.
+
+-------------------
+
+v.2.01
+
+Исправлены ошибки в переводах.
+
+Fixed errors in translations.
+
+-------------------
+
+v.2.0
