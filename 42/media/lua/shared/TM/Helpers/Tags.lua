@@ -14,5 +14,8 @@ function TM.Tags.resolve()
 end
 
 function TM.Tags.has(item, tagObj)
+    if tagObj and type(tagObj) ~= "userdata" then
+        tagObj = getTag(tagObj)
+    end
     return item and tagObj and item:hasTag(tagObj) or false
 end

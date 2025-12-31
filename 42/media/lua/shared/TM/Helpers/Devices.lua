@@ -9,6 +9,29 @@ TM.Devices.AllowedAttach = {
     ["Back"] = true,
 }
 
+function TM.Devices.ensureTCMusic(device, deviceType)
+    if not device or not device.getModData then return nil end
+
+    local modData = device:getModData()
+    if not modData.tcmusic then modData.tcmusic = {} end
+    local trueMusic = modData.tcmusic
+
+    if deviceType and trueMusic.deviceType ~= deviceType then
+        trueMusic.deviceType = deviceType
+    end
+
+    if deviceType == "VehiclePart" then
+        local veh = device.getVehicle and device:getVehicle()
+        if veh and veh.getId then
+            trueMusic.vehId = veh:getId()
+        end
+
+        if device.getId then
+            trueMusic.partId = device:getId()
+        end
+    end
+end
+
 function TM.Devices.fullType(item)
     if not item or not item.getFullType then return nil end
     return item:getFullType()
