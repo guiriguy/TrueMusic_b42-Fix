@@ -1,8 +1,8 @@
 # scripts\deploy_prod.ps1
 $ErrorActionPreference = "Stop"
 
-$Source = "C:\Dev\Git\PZ\TrueMusic_b42-Fix\42"
-$Dest   = "C:\Users\conno\Zomboid\Workshop\TrueMusic_b42 Fix\Contents\mods\TrueMusic_b42 Fix\42"
+$Source = "C:\Dev\Git\PZ\TrueMusic_b42-Fix\42.13"
+$Dest   = "C:\Users\conno\Zomboid\Workshop\TrueMusic_b42 Fix\Contents\mods\TrueMusic_b42 Fix\42.13"
 
 # Crea destino si no existe
 robocopy $Source $Dest /MIR /R:2 /W:1 /XF "mod.info" /NFL /NDL /NP | Out-Null

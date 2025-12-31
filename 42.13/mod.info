@@ -1,0 +1,6 @@
+name=True Music_b42 Fix
+poster=poster.png
+id=[dev]truemusicfix
+description=
+versionMin=42.13
+require=\tsarslib,\truemusic
