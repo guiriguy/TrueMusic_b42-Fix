@@ -1,6 +1,10 @@
 name=True Music_b42Fix
 poster=poster.png
+<<<<<<< Updated upstream
 id=truemusicfix
+=======
+id=truemusicfix42.13.1
+>>>>>>> Stashed changes
 description=
 versionMin=42.13
 require=\tsarslib,\truemusic

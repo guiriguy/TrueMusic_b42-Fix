@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+  "workspace": {
+    "library": [
+      "C:/Dev/Umbrella/library",
+      "D:/SteamLibrary/steamapps/common/ProjectZomboid/media/lua",
+      "D:/SteamLibrary/steamapps/workshop/content/108600/3397198968/mods/TrueMusic_b42/42/media/lua"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "Lua.diagnostics.globals": [
+    "TCMusic",
+    "instanceof",
+    "RWMPanel",
+    "isServer",
+    "isClient",
+    "getTimestampMs"
+  ]
+}

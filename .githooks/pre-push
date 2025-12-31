@@ -1,0 +1,17 @@
+#!/bin/sh
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+
+# Solo en main
+if [ "$branch" = "main" ]; then
+  repo_root="$(git rev-parse --show-toplevel)"
+  ps_script="$repo_root/.githooks/deploy_prod.ps1"
+
+  # Convierte a ruta Windows para powershell
+  win_ps_script="$(cygpath -w "$ps_script")"
+
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$win_ps_script"
+  exit $?
+fi
+
+exit 0
