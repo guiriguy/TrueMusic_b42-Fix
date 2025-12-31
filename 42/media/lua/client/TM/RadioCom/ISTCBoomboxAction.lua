@@ -284,6 +284,12 @@ function ISTCBoomboxAction:isValidAddMedia()
         devItem = self.device
     elseif dType == "VehiclePart" then
         devItem = self.device:getInventoryItem()
+        local tmMusic = devItem:getModData().tcmusic
+        if not TM.Tags.has(devItem, "truemusic:tm_player_cassette") then
+            TM.Debug.log("Car is no player", tmMusic)
+            --self.device:getModData().tcmusic.playerTag = "truemusic:tm_player_cassette"
+            TM.Debug.log("Tried to assing car the tag", devItem:getModData())
+        end
     elseif dType == "IsoObject" then
         local tmMusic = self.device:getModData().tcmusic
         if not tmMusic or not tmMusic.playerTag then return false end
@@ -296,7 +302,9 @@ function ISTCBoomboxAction:isValidAddMedia()
 
     if not devItem or not devItem.hasTag then return false end
 
-    local acceptsVinyl = TM.Tags.has(devItem, "truemusic:tm_player_vinyl")
+    TM.Debug.log("Device", TM.Tags.has(devItem, "truemusic:tm_player_cassette"))
+
+    local acceptsVinyl = TM.Tags.has(devItem, "truemusic:tm_player_vinyl") or nil
     local acceptsCassette = TM.Tags.has(devItem, "truemusic:tm_player_cassette")
 
     local isVinyl = TM.Tags.has(media, "truemusic:tm_media_vinyl")
