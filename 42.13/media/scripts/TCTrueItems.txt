@@ -62,7 +62,7 @@ module Tsarcraft
 		ItemType				= base:radio,
 		Weight					= 0.4,
 		Icon					= TCWalkman,
-		ScaleWorldIcon 			= 0.1,
+		ScaleWorldIcon 			= 1.0,
 		DisplayName 			= Walkman,
 		ConditionMax			= 100,
 		UseDelta				= 0.009, 
