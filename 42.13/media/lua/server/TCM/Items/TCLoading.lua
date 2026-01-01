@@ -1,5 +1,8 @@
-require "TCM/Bootstrap"
-do return end
+require 'Items/SuburbsDistributions'
+require "Items/ProceduralDistributions"
+require "Vehicles/VehicleDistributions"
+-- Thanks to Elf (https://steamcommunity.com/profiles/76561197967301191)
+
 -- Tsarcraft.TCWalkman
 
 table.insert(ProceduralDistributions["list"]["BreakRoomShelves"].items, "Tsarcraft.TCWalkman");

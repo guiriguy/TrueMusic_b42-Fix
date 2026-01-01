@@ -78,13 +78,24 @@ function TCMusic.OnObjectAboutToBeRemovedAux(object)
                 if deviceData then
                     _item:setDeviceData(deviceData)
                 end
-                _item:getDeviceData():setIsTurnedOn(false)
-                sendClientCommand(getPlayer(), 'truemusic', 'deleteWO', {
-                    x = _obj:getX(),
-                    y = _obj:getY(),
-                    z = _obj:getZ(),
-                    nameSprite = TCMusic.WorldMusicPlayer[_item:getFullType()],
-                })
+
+                local iModData = _item:getModData().tcmusic
+                local wasPlaying = iModData and iModData.isPlaying == true or false
+
+                if not wasPlaying then
+                    if iModData then iModData.isPlaying = false end
+                    if _item:getDeviceData() then
+                        _item:getDeviceData():setIsTurnedOn(false)
+                    end
+                end
+                if not wasPlaying then
+                    sendClientCommand(getPlayer(), 'truemusic', 'deleteWO', {
+                        x = _obj:getX(),
+                        y = _obj:getY(),
+                        z = _obj:getZ(),
+                        nameSprite = TCMusic.WorldMusicPlayer[_item:getFullType()],
+                    })
+                end
                 -- square:transmitRemoveItemFromSquare(_obj)
                 -- square:RecalcProperties();
                 -- square:RecalcAllWithNeighbours(true);
