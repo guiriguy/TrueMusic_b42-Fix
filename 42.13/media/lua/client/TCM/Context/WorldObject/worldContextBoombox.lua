@@ -48,7 +48,7 @@ local function resolveIsoRadioFromFloorItem(item)
     for i = 0, square:getObjects():size() - 1 do
         local object = square:getObjects():get(i)
         if instanceof(object, "IsoRadio") then
-            local radioId = object:getModData() and object.getModData().RadioItemID
+            local radioId = object:getModData() and object:getModData().RadioItemID
             if radioId == item:getID() then
                 return object
             end
