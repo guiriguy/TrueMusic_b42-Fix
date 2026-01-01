@@ -12,7 +12,7 @@ TCM.Legacy.registerMediaType("VinylMainTheme", vinylBank)
 -- Inventory devices
 TCM.Legacy.registerDeviceInventory("Tsarcraft.TCBoombox", cassetteBank, false)
 TCM.Legacy.registerDeviceInventory("Tsarcraft.TCWalkman", cassetteBank, true)
-TCM.Legacy.registerDeviceInventory("Tsarcraft.TCVinylplayer", vinylBank, false)
+--TCM.Legacy.registerDeviceInventory("Tsarcraft.TCVinylplayer", vinylBank, false)
 
 -- Vehicle radios (legacy maps these to cassette bank)
 TCM.Legacy.registerDeviceVehicle("Base.HamRadio1", cassetteBank)
