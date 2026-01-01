@@ -5,15 +5,16 @@
 TCM                       = TCM or {}
 TCM.ClientAudio           = TCM.ClientAudio or {}
 
--- local sessions: [musicId] = { sid, name, lastVol }
+-- local sessions: [musicId] = { sid, name, lastVol , emitter, obj}
 local SESS                = TCM.ClientAudio._sessions or {}
 TCM.ClientAudio._sessions = SESS
 
 -- Tuning knobs
-local MAX_DIST            = 60    -- where volume goes to ~0 (your "fade out" range)
-local START_DIST          = 60    -- start only if closer than this
-local STOP_DIST           = 65    -- stop only if farther than this (hysteresis)
-local SILENCE             = 0.001 -- below this we stop
+local MAX_DIST            = 18      -- where volume goes to ~0 (your "fade out" range)
+local START_DIST          = 22      -- start only if closer than this
+local STOP_DIST           = 22      -- stop only if farther than this (hysteresis)
+local WORLD_VOL_SCALE     = 0.4
+local SILENCE             = 0.00001 -- below this we stop
 
 local function clamp(v, a, b)
     if v < a then return a end
@@ -24,7 +25,7 @@ end
 -- Smooth curve: 1 at dist=0 -> 0 at dist>=MAX_DIST
 local function volumeCurve(dist)
     local t = clamp(1 - (dist / MAX_DIST), 0, 1)
-    return t * t * t -- cubic
+    return t * t * t
 end
 
 local function parseCoord(coord)
@@ -46,38 +47,65 @@ local function dist2D(ax, ay, bx, by)
     return math.sqrt(dx * dx + dy * dy)
 end
 
-local function stopSession(playerEmitter, musicId)
+local function findWorldDeviceAt(x, y, z)
+    local sq = getSquare(x, y, z or 0)
+    if not sq then return nil end
+
+    local objs = sq:getObjects()
+    for i = 0, objs:size() - 1 do
+        local o = objs:get(i)
+
+        if instanceof(o, "IsoWaveSignal") then
+            local dd = o:getDeviceData()
+            local em = dd and dd.getEmitter and dd:getEmitter() or nil
+            if em then
+                -- Si tienes el mapa de sprites de TrueMusic, úsalo para filtrar
+                if TCMusic and TCMusic.WorldMusicPlayer then
+                    local spr = o:getSprite()
+                    local n = spr and spr:getName()
+                    if n and TCMusic.WorldMusicPlayer[n] then
+                        return o, em
+                    end
+                else
+                    -- fallback (menos preciso)
+                    return o, em
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+
+local function stopSession(musicId)
     local s = SESS[musicId]
     if not s then return end
-    if playerEmitter and s.sid then
-        playerEmitter:stopSound(s.sid)
+    if s.emitter and s.sid then
+        s.emitter:stopSound(s.sid)
     end
     SESS[musicId] = nil
 end
 
-local function ensurePlaying(playerEmitter, musicId, soundName)
+local function ensurePlaying(emitter, obj, musicId, soundName)
     local s = SESS[musicId]
-    if s and s.sid and s.name == soundName then
+    if s and s.sid and s.name == soundName and s.emitter == emitter then
         return s
     end
 
     -- If the track changed, stop old
-    if s and s.sid then
-        playerEmitter:stopSound(s.sid)
+    if s and s.sid and s.emitter then
+        s.emitter:stopSound(s.sid)
     end
 
-    local sid = playerEmitter:playSoundImpl(soundName, nil)
+    local sid = emitter:playSoundImpl(soundName, obj)
     if not sid then
         -- can't start, keep no session
         SESS[musicId] = nil
         return nil
     end
 
-    if playerEmitter.set3D then
-        playerEmitter:set3D(sid, true)
-    end
-
-    s = { sid = sid, name = soundName, lastVol = -1 }
+    s = { sid = sid, name = soundName, lastVol = -1, emitter = emitter, obj = obj }
     SESS[musicId] = s
     return s
 end
@@ -85,8 +113,6 @@ end
 -- Call this from your main OnTick handler
 function TCM.ClientAudio.updateFromNowPlay(playerObj)
     if not playerObj then return end
-    local emitter = playerObj:getEmitter()
-    if not emitter then return end
 
     local nowPlay = ModData.getOrCreate("trueMusicData")["now_play"] or {}
 
@@ -102,36 +128,30 @@ function TCM.ClientAudio.updateFromNowPlay(playerObj)
         local soundName = data and data.musicName
         local baseVol = data and data.volume or 1.0
 
-        if coord and soundName then
-            local x, y = parseCoord(coord)
-            if x and y then
-                local d = dist2D(px, py, x, y)
+        local x, y, z = parseCoord(coord)
+        if x and y and soundName then
+            local d = dist2D(px, py, x, y)
 
-                local s = SESS[musicId]
-                if (not s) then
-                    -- only start when close enough
-                    if d <= START_DIST then
-                        s = ensurePlaying(emitter, musicId, soundName)
+            local s = SESS[musicId]
+
+            -- hard stop por distancia
+            if s and d >= STOP_DIST then
+                stopSession(musicId)
+            elseif d <= START_DIST then
+                local obj, devEmitter = findWorldDeviceAt(x, y, z or playerObj:getZ())
+                if obj and devEmitter then
+                    -- start / restart si hace falta
+                    if (not s) or (s.name ~= soundName) or (s.emitter ~= devEmitter) then
+                        s = ensurePlaying(devEmitter, obj, musicId, soundName)
                     end
-                else
-                    -- track changed?
-                    if s.name ~= soundName then
-                        s = ensurePlaying(emitter, musicId, soundName)
-                    end
-                end
 
-                if s then
-                    s._seen = true
+                    if s then
+                        s._seen = true
 
-                    -- Fade volume with distance; stop when far enough (hysteresis)
-                    local gain = baseVol * volumeCurve(d)
-
-                    if (d >= STOP_DIST) or (gain <= SILENCE) then
-                        stopSession(emitter, musicId)
-                    else
-                        -- update volume only if it changed enough (avoid spam)
-                        if math.abs(gain - (s.lastVol or -1)) > 0.01 then
-                            emitter:setVolume(s.sid, gain)
+                        -- volumen base (sin curva; el motor hace la distancia)
+                        local gain = baseVol * WORLD_VOL_SCALE * volumeCurve(d)
+                        if math.abs(gain - (s.lastVol or -1)) > SILENCE then
+                            s.emitter:setVolume(s.sid, gain)
                             s.lastVol = gain
                         end
                     end
@@ -143,7 +163,7 @@ function TCM.ClientAudio.updateFromNowPlay(playerObj)
     -- Stop any sessions that the server no longer reports
     for musicId, s in pairs(SESS) do
         if not s._seen then
-            stopSession(emitter, musicId)
+            stopSession(musicId)
         end
     end
 end
