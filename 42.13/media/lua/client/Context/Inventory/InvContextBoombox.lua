@@ -4,7 +4,6 @@ do return end
 require "TCMusicDefenitions"
 ISInventoryMenuElements = ISInventoryMenuElements or {};
 function ISInventoryMenuElements.ContextBoombox()
-    print("TTTTTT")
     local self = ISMenuElement.new();
     self.invMenu = ISContextManager.getInstance().getInventoryMenu();
     function self.init()
@@ -24,7 +23,7 @@ function ISInventoryMenuElements.ContextBoombox()
         if isWalkman or isItemMusicPlayer then
             if container and self.invMenu.player and container == self.invMenu.player:getInventory() then
                 local context = self.invMenu.context;
-                local deviceOptionText = getText("IGUI_DeviceOptions");
+                local deviceOptionText = getText("IGUI_DeviceOptions" .. "T");
                 if context.getOptionFromName and context:getOptionFromName(deviceOptionText) then
                     local opt = context:getOptionFromName(deviceOptionText);
                     if context.removeOptionTsar then

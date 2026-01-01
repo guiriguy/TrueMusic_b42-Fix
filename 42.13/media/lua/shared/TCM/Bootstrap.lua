@@ -41,8 +41,8 @@ req("TCM/Builtins/Tsarcraft")
 -- 3) Replacements
 req("TCM/TCMusicClientFunctions")
 req("TCM/TCTickCheckMusic")
-req("Context/Inventory/InvContextBoombox")
-req("Context/WorldObject/WorldContextBoombox")
+req("TCM/Context/Inventory/InvContextBoombox")
+req("TCM/Context/WorldObject/WorldContextBoombox")
 
 -- Client-Only
 if not isServer() then
