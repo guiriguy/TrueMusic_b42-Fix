@@ -47,7 +47,7 @@ req("TCM/Context/WorldObject/WorldContextBoombox")
 -- Client-Only
 if not isServer() then
     --req("TCM/client/UI/ContextMenu")
-    --req("TCM/client/Audio/ClientAudio")
+    req("TCM/Audio/ClientAudio")
 end
 
 print("[TrueMusic] Bootstrapped v1 (contract-first)")

@@ -1,6 +1,3 @@
-require "TCM/Bootstrap"
-do return end
-
 require "TCMusicClientFunctions"
 
 TCMusic.oldISRadioWindow_activate = ISRadioWindow.activate
@@ -26,6 +23,10 @@ function ISRadioWindow.activate(_player, _item, bol)
                         if itemID == radioItemID then
                             if TCMusic.WorldMusicPlayer[itemObj:getItem():getFullType()] then
                                 invItem = itemObj:getItem()
+                                local iModData = invItem:getModData().tcmusic
+                                local wasPlaying = (iModData and iModData.isPlaying == true) or false
+                                TCM.Debug.log(wasPlaying)
+
                                 square = itemObj:getSquare()
                                 square:transmitRemoveItemFromSquare(_item)
                                 square:RecalcProperties()
@@ -33,17 +34,19 @@ function ISRadioWindow.activate(_player, _item, bol)
                                 local radio = IsoRadio.new(getCell(), square,
                                     getSprite(TCMusic.WorldMusicPlayer[invItem:getFullType()]))
                                 square:AddTileObject(radio)
-                                if invItem:getModData().tcmusic then
-                                    radio:getModData().tcmusic = invItem:getModData().tcmusic
+
+                                local rModData = radio:getModData()
+                                if iModData then
+                                    rModData.tcmusic = iModData
                                 else
-                                    radio:getModData().tcmusic = {}
+                                    rModData.tcmusic = {}
                                 end
-                                radio:getModData().tcmusic.itemid = square:getX() * 1000000 + square:getY() * 1000 +
-                                square:getZ()
-                                radio:getModData().tcmusic.deviceType = "IsoObject"
-                                radio:getModData().tcmusic.isPlaying = false
-                                radio:getModData().RadioItemID = invItem:getID()
-                                radio:getDeviceData():setIsTurnedOn(false)
+
+                                rModData.tcmusic.itemid = square:getX() * 1000000 + square:getY() * 1000 + square:getZ()
+                                rModData.tcmusic.deviceType = "IsoObject"
+                                rModData.tcmusic.isPlaying = wasPlaying
+                                rModData.RadioItemID = invItem:getID()
+                                radio:getDeviceData():setIsTurnedOn(wasPlaying)
                                 radio:getDeviceData():setPower(invItem:getDeviceData():getPower())
                                 radio:getDeviceData():setDeviceVolume(invItem:getDeviceData():getDeviceVolume())
                                 if invItem:getDeviceData():getIsBatteryPowered() and invItem:getDeviceData():getHasBattery() then

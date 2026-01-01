@@ -2,9 +2,15 @@
 
 require "TCMusicClientFunctions"
 require "TM/Config"
+require "TCM/Audio/ClientAudio"
 
-TCM = TCM or {}
-TCM.Config = TCM.Config or TM.Config or {}
+local ENABLE_NOWPLAY_LOOP  = true
+local ENABLE_LEGACY__WORLD = false
+
+TCM                        = TCM or {}
+TCM.Config                 = TCM.Config or TM.Config or {}
+if TCM.__tick_music_loaded then return end
+TCM.__tick_music_loaded = true
 
 if TCM.Config.DisableTickCheck then
     return
@@ -14,32 +20,42 @@ local localWoMusicTable = {}
 local localPlayerMusicTable = {}
 local localVehicleMusicTable = {}
 
-local tickControl = 100 -- Сокращает количество срабатываний скрипта. Больше число - меньше срабатываний
+-- Сокращает количество срабатываний скрипта. Больше число - меньше срабатываний
+-- Reduces how often the script runs. Higher value = fewer executions.
+local tickControl = 5
 local tickStart = 0
 
 function OnRenderTickClientCheckMusic()
+    if TCM and TCM.ClientAudio and TCM.ClientAudio.updateFromNowPlay then
+        TCM.ClientAudio.updateFromNowPlay(getPlayer())
+    end
     tickStart = tickStart + 1
     if tickStart % tickControl == 0 then
         tickStart = 0
         -- Запрашиваем данные с сервера о музыке
+        -- Request music state from the server.
         if isClient() then
             ModData.request("trueMusicData")
         end
 
         -- проверяем играет ли музыка в машинах, рядом с нами
+        -- Check if nearby vehicles are playing music.
         local vehicles = getCell():getVehicles()
         for i = 0, vehicles:size() - 1 do
             local vehicle = vehicles:get(i)
             local vehicleRadio = vehicle:getPartById("Radio")
             -- Ищем рядом авто, которые должны играть музыку
+            -- Find nearby vehicles that should be playing music.
             if vehicleRadio and vehicleRadio:getModData().tcmusic then
                 if vehicleRadio:getModData().tcmusic.mediaItem and
                     vehicleRadio:getModData().tcmusic.isPlaying then
                     -- если найдено
+                    -- If found.
                     vehicle:updateParts(); -- Выполнить обновление деталей, тем самым, вызвав функцию на сервере Vehicle.Update.Radio
                     -- print("updateParts")
                     if not localVehicleMusicTable[vehicle:getSqlId()] then
                         -- если авто нет в локальной таблице, значит музыка не играет. Включаем музыку и записываем авто в таблицу.
+                        -- If the vehicle is in the local table, we assume it is playing.
                         local id = vehicle:getEmitter():playSoundImpl(vehicleRadio:getModData().tcmusic.mediaItem,
                             IsoObject.new())
                         local vol = vehicleRadio:getDeviceData():getDeviceVolume()
@@ -61,6 +77,7 @@ function OnRenderTickClientCheckMusic()
                         vehicle:getEmitter():set3D(localVehicleMusicTable[vehicle:getSqlId()]["localmusicid"], vol3d)
                     else
                         -- если авто есть в локальной таблице, значит музыка играет
+
                         if localVehicleMusicTable[vehicle:getSqlId()]["obj"]:getEmitter() and
                             localVehicleMusicTable[vehicle:getSqlId()]["obj"]:getEmitter():isPlaying(localVehicleMusicTable[vehicle:getSqlId()]["localmusicid"]) then
                             -- если музыка играет, продолжаем контролировать громкость и необходимость вкл/выкл 3д-эффекта
@@ -132,225 +149,306 @@ function OnRenderTickClientCheckMusic()
 
         local musicServerTable = ModData.getOrCreate("trueMusicData")
         if musicServerTable and musicServerTable["now_play"] then
-            for musicId, musicServerData in pairs(musicServerTable["now_play"]) do
-                -- print("IN MODDATA:" .. musicId)
-                local strCoord = string.match(musicId, '%d*[-]%d*[-]%d*')
+            if ENABLE_NOWPLAY_LOOP then
+                for musicId, musicServerData in pairs(musicServerTable["now_play"]) do
+                    -- print("IN MODDATA:" .. musicId)
+                    local strCoord = tostring(musicId):match("%-?%d+[%-,]%-?%d+[%-,]%-?%d+")
 
-                -- Автомобильная музыка обрабатывается в коде выше
-                if musicId == "Vehicle" then
-                    -- Музыка из мира
-                elseif strCoord then
-                    local musicData = localWoMusicTable
-                        [musicId] -- musicId = координаты места где стоит музыкальный проигрыватель
+                    -- Автомобильная музыка обрабатывается в коде выше
+                    if musicId == "Vehicle" then
+                        -- Музыка из мира
+                        -- World music (placed devices).
+                    elseif strCoord then
+                        if ENABLE_LEGACY__WORLD then
+                            local musicData = localWoMusicTable
+                                [musicId] -- musicId = координаты места где стоит музыкальный проигрыватель
 
-                    -- если проигрывателя нет в локальной таблице, значит музыка не играет. Ищем проигрыватель, включаем музыку и записываем в таблицу.
-                    if not (musicData and musicData["obj"]) then
-                        local i = string.find(strCoord, "-")
-                        local x = tonumber(string.sub(strCoord, 1, i - 1))
-                        strCoord = string.sub(strCoord, i + 1)
-                        i = string.find(strCoord, "-")
-                        local y = tonumber(string.sub(strCoord, 1, i - 1))
-                        local z = tonumber(string.sub(strCoord, i + 1))
-                        local playerObj = getPlayer()
+                            -- если проигрывателя нет в локальной таблице, значит музыка не играет. Ищем проигрыватель, включаем музыку и записываем в таблицу.
+                            if not (musicData and musicData["obj"]) then
+                                local i = string.find(strCoord, "-")
+                                local x = tonumber(string.sub(strCoord, 1, i - 1))
+                                strCoord = string.sub(strCoord, i + 1)
+                                i = string.find(strCoord, "-")
+                                local y = tonumber(string.sub(strCoord, 1, i - 1))
+                                local z = tonumber(string.sub(strCoord, i + 1))
+                                local playerObj = getPlayer()
 
-                        -- если игрок рядом с местом, где играет музыка
-                        if playerObj and (playerObj:getX() >= x - 60 and playerObj:getX() <= x + 60 and
-                                playerObj:getY() >= y - 60 and playerObj:getY() <= y + 60) then
-                            local musicSquare = getSquare(x, y, z)
-                            if musicSquare then
-                                musicPlayerFound = false
-                                for i = 1, musicSquare:getObjects():size() do
-                                    object2 = musicSquare:getObjects():get(i - 1)
-                                    if instanceof(object2, "IsoWaveSignal") then
-                                        local sprite = object2:getSprite()
-                                        if sprite ~= nil then
-                                            local name_sprite = sprite:getName()
-                                            if TCMusic.WorldMusicPlayer[name_sprite] then
-                                                musicPlayerFound = true
-                                                getSoundManager():StopMusic()
-                                                localWoMusicTable[musicId] = {
-                                                    obj = object2,
-                                                    volume = object2:getDeviceData():getDeviceVolume()
-                                                }
-                                                musicData = localWoMusicTable[musicId]
+                                -- если игрок рядом с местом, где играет музыка
+                                local isNear = playerObj and
+                                    (math.abs(playerObj:getX() - x) <= 60 and math.abs(playerObj:getY() - y) <= 60)
+                                if isNear then
+                                    local musicSquare = getSquare(x, y, z)
+                                    local playerObj = getPlayer()
+                                    if musicSquare then
+                                        local musicPlayerFound = false
+                                        for i = 1, musicSquare:getObjects():size() do
+                                            object2 = musicSquare:getObjects():get(i - 1)
+                                            if instanceof(object2, "IsoWaveSignal") then
+                                                TCM.Debug.log("musicplayer", musicPlayerFound)
+                                                if musicPlayerFound then break end
+                                                local sprite = object2:getSprite()
+                                                if sprite ~= nil then
+                                                    local name_sprite = sprite:getName()
+                                                    if TCMusic.WorldMusicPlayer[name_sprite] then
+                                                        musicPlayerFound = true
+                                                        print("[TCM] localWo entry exists? " ..
+                                                            tostring(localWoMusicTable[musicId] ~= nil))
+                                                        localWoMusicTable[musicId] = {
+                                                            obj = object2,
+                                                            volume = object2:getDeviceData():getDeviceVolume()
+                                                        }
+                                                        print("[TCM] localWo entry now? " ..
+                                                            tostring(localWoMusicTable[musicId] ~= nil))
+                                                        musicData = localWoMusicTable[musicId]
 
-                                                -- Если музыка уже играет не включать повторно (музыка для игроков в наушниках включается в другом месте)
-                                                if musicData["obj"]:getModData().tcmusic.mediaItem and musicData["obj"]:getDeviceData():getEmitter() and musicData["obj"]:getDeviceData():getEmitter():isPlaying(musicData["obj"]:getModData().tcmusic.mediaItem) then
+                                                        local emitter = musicData["obj"]:getDeviceData() and
+                                                            musicData["obj"]:getDeviceData():getEmitter()
+                                                        if not emitter then break end
 
-                                                else
-                                                    if musicData["obj"]:getDeviceData():getEmitter() then
-                                                        musicData["obj"]:getDeviceData():getEmitter():stopAll()
+                                                        local sid = musicData["localmusicid"]
+                                                        local serverName = musicServerData and
+                                                            musicServerData.musicName
+
+                                                        -- If server is still reporting the same track, we consider the session valid.
+                                                        -- Do NOT re-start just because isPlaying() says false (3D sounds can be virtualized/delayed).
+                                                        if musicData.musicName == serverName and musicData.localmusicid then
+                                                            -- session exists: only sync volume
+                                                            local sid = musicData.localmusicid
+                                                            if sid and emitter then
+                                                                emitter:setVolume(sid,
+                                                                    (musicServerData.volume or 1.0) * 0.4)
+                                                            end
+                                                        else
+                                                            -- stop previous instance only (NOT stopAll)
+                                                            if sid then
+                                                                TCM.Debug.log("Stopped music")
+                                                                emitter:stopSound(sid)
+                                                            end
+
+                                                            local media = musicServerData and
+                                                                musicServerData["musicName"] or
+                                                                nil
+                                                            if not media or media == "" then break end
+
+                                                            local newSid = emitter:playSoundImpl(media,
+                                                                musicData["obj"])
+                                                            musicData["localmusicid"] = newSid
+                                                            musicData["musicName"] = media
+                                                            musicData["volume"] = (musicServerData and musicServerData["volume"]) or
+                                                                musicData["obj"]:getDeviceData():getDeviceVolume()
+                                                            -- Store start time: emitter:isPlaying(id) may return false for the first tick after starting.
+                                                            musicData["startedAt"] = getGameTime():getWorldAgeHours()
+
+                                                            -- set volume / 3D if we got an id
+                                                            if newSid then
+                                                                local vol = (musicServerData and musicServerData["volume"] or 1.0) *
+                                                                    0.4
+                                                                --emitter:setVolume(newSid, vol)
+                                                                --emitter:set3D(newSid, true)
+                                                            end
+
+                                                            print("[TCM] World start media=" ..
+                                                                tostring(media) ..
+                                                                " musicId=" ..
+                                                                tostring(musicId) .. " sid=" .. tostring(newSid))
+                                                            break
+                                                        end
                                                     end
-                                                    musicData["obj"]:getDeviceData():playSound(
-                                                        musicData["obj"]:getModData().tcmusic.mediaItem,
-                                                        musicData["volume"] * 0.4, false)
                                                 end
-                                                break
+                                            end
+                                        end
+                                        -- обработка случае, когда бумбокс уничтожили
+                                        -- Handle the case where the boombox/device was destroyed.
+                                        if not musicPlayerFound then
+                                            if localWoMusicTable[musicId] and localWoMusicTable[musicId].obj then
+                                                local e = localWoMusicTable[musicId].obj:getDeviceData() and
+                                                    localWoMusicTable[musicId].obj:getDeviceData():getEmitter()
+                                                if e then e:stopAll() end
+                                                localWoMusicTable[musicId] = nil
                                             end
                                         end
                                     end
                                 end
-                                -- обработка случае, когда бумбокс уничтожили
-                                if not musicPlayerFound then
-                                    -- print("musicPlayerFound not FOUND")
-                                    ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                                    if isClient() then ModData.transmit("trueMusicData") end
-                                end
-                            end
-                        end
-                    end
 
-                    -- если проигрыватель есть в локальной таблице
-                    if musicData and musicData["obj"] then
-                        if musicData["obj"]:getModData().tcmusic.isPlaying then
-                            if musicData["obj"]:getDeviceData() and musicData["obj"]:getDeviceData():getEmitter() then
-                                -- если музыка перестала играть, отправляем информацию на сервер и очищаем локальную таблицу
-                                if not musicData["obj"]:getModData().tcmusic.mediaItem or not musicData["obj"]:getDeviceData():getEmitter():isPlaying(musicData["obj"]:getModData().tcmusic.mediaItem) then
-                                    musicData["obj"]:getDeviceData():getEmitter():stopAll()
-                                    musicData["obj"]:getModData().tcmusic.isPlaying = false
-                                    musicData["obj"]:transmitModData()
-                                    ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                                    localWoMusicTable[musicId] = nil
-                                    if isClient() then ModData.transmit("trueMusicData") end
+                                -- если проигрыватель есть в локальной таблице
+                                -- If the player is in the local table.
+                                if musicData then
+                                    if musicData and musicData["obj"] then
+                                        TCM.Debug.log("ServerData", musicServerData, musicServerData["musicName"])
+                                        if musicServerData and musicServerData["musicName"] then
+                                            if musicData["obj"]:getDeviceData() and musicData["obj"]:getDeviceData():getEmitter() then
+                                                local emitter = musicData["obj"]:getDeviceData():getEmitter()
+                                                local sid = musicData["localmusicid"]
+                                                local now = getGameTime():getWorldAgeHours()
+                                                local startedAt = musicData["startedAt"] or 0
+                                                -- Grace period: avoid killing the session immediately after starting (isPlaying(id) may be false for 1-2 ticks).
+                                                local grace = 2 / 3600 -- 2 seconds
 
-                                    -- если музыка играет, контролируем настройки громкости
-                                else
-                                    if musicData["volume"] ~= musicData["obj"]:getDeviceData():getDeviceVolume() then
-                                        musicData["obj"]:getDeviceData():getEmitter():setVolumeAll(musicData["obj"]
-                                            :getDeviceData():getDeviceVolume() * 0.4)
-                                        localWoMusicTable[musicId]["volume"] = musicData["obj"]:getDeviceData()
-                                            :getDeviceVolume()
-                                    end
-                                end
-                            else
-                                -- print("ERR")
-                                localWoMusicTable[musicId] = nil
-                            end
-                        else
-                            if musicData["obj"]:getDeviceData() and musicData["obj"]:getDeviceData():getEmitter() then
-                                musicData["obj"]:getDeviceData():getEmitter():stopAll()
-                            end
-                            ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                            localWoMusicTable[musicId] = nil
-                            if isClient() then ModData.transmit("trueMusicData") end
-                        end
-                    end
-
-                    -- Музыка "из карманов"
-                else
-                    local player = nil
-                    if isClient() then
-                        player = getPlayerByOnlineID(musicId)
-                    else
-                        for playerNum = 0, getNumActivePlayers() - 1 do
-                            local tempPlayerObj = getSpecificPlayer(playerNum)
-                            if tempPlayerObj:getUsername() == musicId then player = tempPlayerObj end
-                        end
-                    end
-                    if player and not player:isDead() then
-                        local x = player:getX()
-                        local y = player:getY()
-                        local z = player:getZ()
-                        local playerObj = getPlayer()
-                        if playerObj then
-                            -- разбор случая для локального игрока, у которого в руках играем музыка
-                            if playerObj == player then
-                                local musicData = localPlayerMusicTable[musicId]
-                                local musicplayer = playerObj:getInventory():getItemById(musicServerData["itemid"])
-
-                                -- если игрок выбросил бумбокс, отправляем информацию на сервер
-                                if not musicplayer then
-                                    playerObj:getEmitter():stopSound(playerObj:getModData().tcmusicid)
-                                    ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                                    if isClient() then ModData.transmit("trueMusicData") end
-                                    -- если музыка перестала играть, отправляем информацию на сервер
-                                elseif not musicplayer:getModData().tcmusic.mediaItem or
-                                    not playerObj:getEmitter():isPlaying(playerObj:getModData().tcmusicid) or
-                                    not musicplayer:getDeviceData() or
-                                    not musicplayer:getDeviceData():getIsTurnedOn() then
-                                    -- elseif not musicplayer:getModData().tcmusic.mediaItem or musicplayer:getDeviceData():getEmitter() and not musicplayer:getDeviceData():getEmitter():isPlaying(musicplayer:getModData().tcmusic.mediaItem) then
-                                    playerObj:getEmitter():stopSound(playerObj:getModData().tcmusicid)
-                                    musicplayer:getModData().tcmusic.isPlaying = false
-                                    ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                                    if isClient() then ModData.transmit("trueMusicData") end
-                                end
-
-                                -- Анализ остальных игроков, если они в зоне радиуса текущего игрока
-                            elseif ((playerObj:getX() >= x - 60 and playerObj:getX() <= x + 60 and
-                                    playerObj:getY() >= y - 60 and playerObj:getY() <= y + 60)) then
-                                local musicData = localPlayerMusicTable[musicId]
-                                local musicPlayer = player:getSecondaryHandItem()
-                                -- если игрока с музыкой нет в локальной таблице
-                                if not musicData then
-                                    -- проверяем, что проигрыватель всё еще в руках игрока, запускаем музыку, записываем в локальную таблицу
-                                    if -- (player:getPrimaryHandItem() and (player:getPrimaryHandItem():getID() == musicServerData["itemid"])) or
-                                        (musicPlayer and (musicPlayer:getID() == musicServerData["itemid"])) and
-                                        musicPlayer:getDeviceData() and (musicPlayer:getDeviceData():getPower() > 0) then
-                                        local id = player:getEmitter():playSoundImpl(musicServerData["musicName"], nil)
-                                        -- print("MUSIC ID:")
-                                        -- print(id)
-                                        local koef = 0.4 -- коэффициент отвечающий за наличие наушников
-                                        if musicServerData["headphone"] then
-                                            koef = 0.02
+                                                -- NOTE: emitter:isPlaying(id) can be false for a short time right after start (engine/virtualization).
+                                                -- Only treat it as stopped if it stays false after the grace period.
+                                                if (not (musicServerData and musicServerData["musicName"])) or (not emitter) or (not sid) then
+                                                    if emitter and sid then --emitter:stopSound(sid) end
+                                                        localWoMusicTable[musicId] = nil
+                                                    elseif (not emitter:isPlaying(sid)) then
+                                                        if (now - startedAt) > grace then
+                                                            emitter:stopSound(sid)
+                                                            localWoMusicTable[musicId] = nil
+                                                        else
+                                                            -- still within grace period; keep session alive
+                                                        end
+                                                    else
+                                                        if musicData["volume"] ~= musicData["obj"]:getDeviceData():getDeviceVolume() then
+                                                            musicData["obj"]:getDeviceData():getEmitter():setVolumeAll(
+                                                                musicData
+                                                                ["obj"]
+                                                                :getDeviceData():getDeviceVolume() * 0.4)
+                                                            localWoMusicTable[musicId]["volume"] = musicData["obj"]
+                                                                :getDeviceData()
+                                                                :getDeviceVolume()
+                                                        end
+                                                    end
+                                                else
+                                                    -- print("ERR")
+                                                    localWoMusicTable[musicId] = nil
+                                                end
+                                            else
+                                                -- Server no longer reports this entry: stop local sound and forget it
+                                                if musicData["obj"]:getDeviceData() and musicData["obj"]:getDeviceData():getEmitter() then
+                                                    local emitter = musicData["obj"]:getDeviceData():getEmitter()
+                                                    local sid = musicData["localmusicid"]
+                                                    if sid then emitter:stopSound(sid) else emitter:stopAll() end
+                                                end
+                                                localWoMusicTable[musicId] = nil
+                                            end
                                         end
-                                        localPlayerMusicTable[musicId] = {
-                                            localmusicid = id,
-                                            volume = musicServerData["volume"] * koef,
-                                        }
-                                        player:getEmitter():setVolume(localPlayerMusicTable[musicId]["localmusicid"],
-                                            musicServerData["volume"] * koef)
                                     end
-                                else
-                                    -- если игрок в локальной таблице и музыка продолжает играть, контролируем громкость
-                                    if player:getEmitter():isPlaying(musicData["localmusicid"]) then
+                                end
+                            end
+                            -- Музыка "из карманов"
+                        end
+                    else
+                        local player = nil
+                        if isClient() then
+                            player = getPlayerByOnlineID(musicId)
+                        else
+                            for playerNum = 0, getNumActivePlayers() - 1 do
+                                local tempPlayerObj = getSpecificPlayer(playerNum)
+                                if tempPlayerObj:getUsername() == musicId then player = tempPlayerObj end
+                            end
+                        end
+                        if player and not player:isDead() then
+                            local x = player:getX()
+                            local y = player:getY()
+                            local z = player:getZ()
+                            local playerObj = getPlayer()
+                            if playerObj then
+                                -- разбор случая для локального игрока, у которого в руках играем музыка
+                                if playerObj == player then
+                                    local musicData = localPlayerMusicTable[musicId]
+                                    local inv = playerObj:getInventory()
+                                    local itemId = tonumber(musicServerData and musicServerData["itemid"])
+                                    local musicplayer = (itemId and inv and inv.getItemById) and
+                                        inv:getItemById(itemId) or
+                                        nil
+
+                                    -- если игрок выбросил бумбокс, отправляем информацию на сервер
+                                    if not musicplayer then
+                                        playerObj:getEmitter():stopSound(playerObj:getModData().tcmusicid)
+                                        ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
+                                        if isClient() then ModData.transmit("trueMusicData") end
+                                        -- если музыка перестала играть, отправляем информацию на сервер
+                                    elseif not musicplayer:getModData().tcmusic.mediaItem or
+                                        not playerObj:getEmitter():isPlaying(playerObj:getModData().tcmusicid) or
+                                        not musicplayer:getDeviceData() or
+                                        not musicplayer:getDeviceData():getIsTurnedOn() then
+                                        -- elseif not musicplayer:getModData().tcmusic.mediaItem or musicplayer:getDeviceData():getEmitter() and not musicplayer:getDeviceData():getEmitter():isPlaying(musicplayer:getModData().tcmusic.mediaItem) then
+                                        playerObj:getEmitter():stopSound(playerObj:getModData().tcmusicid)
+                                        musicplayer:getModData().tcmusic.isPlaying = false
+                                        ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
+                                        if isClient() then ModData.transmit("trueMusicData") end
+                                    end
+
+                                    -- Анализ остальных игроков, если они в зоне радиуса текущего игрока
+                                elseif ((playerObj:getX() >= x - 60 and playerObj:getX() <= x + 60 and
+                                        playerObj:getY() >= y - 60 and playerObj:getY() <= y + 60)) then
+                                    local musicData = localPlayerMusicTable[musicId]
+                                    local musicPlayer = player:getSecondaryHandItem()
+                                    -- если игрока с музыкой нет в локальной таблице
+
+                                    if not musicData then
+                                        -- проверяем, что проигрыватель всё еще в руках игрока, запускаем музыку, записываем в локальную таблицу
                                         if -- (player:getPrimaryHandItem() and (player:getPrimaryHandItem():getID() == musicServerData["itemid"])) or
-                                            (musicPlayer and musicPlayer:getDeviceData() and
-                                                musicPlayer:getDeviceData():getIsTurnedOn() and
-                                                (musicPlayer:getDeviceData():getPower() > 0) and
-                                                (musicPlayer:getID() == musicServerData["itemid"])) then
+                                            (musicPlayer and (musicPlayer:getID() == musicServerData["itemid"])) and
+                                            musicPlayer:getDeviceData() and (musicPlayer:getDeviceData():getPower() > 0) then
+                                            local id = player:getEmitter():playSoundImpl(
+                                                musicServerData["musicName"],
+                                                nil)
+                                            -- print("MUSIC ID:")
+                                            -- print(id)
                                             local koef = 0.4 -- коэффициент отвечающий за наличие наушников
                                             if musicServerData["headphone"] then
                                                 koef = 0.02
                                             end
-                                            if musicData["volume"] ~= musicServerData["volume"] * koef then
-                                                player:getEmitter():setVolume(musicData["localmusicid"],
-                                                    musicServerData["volume"] * koef)
-                                                musicData["volume"] = musicServerData["volume"] * koef
+                                            localPlayerMusicTable[musicId] = {
+                                                localmusicid = id,
+                                                volume = musicServerData["volume"] * koef,
+                                            }
+                                            player:getEmitter():setVolume(
+                                                localPlayerMusicTable[musicId]["localmusicid"],
+                                                musicServerData["volume"] * koef)
+                                        end
+                                    else
+                                        -- если игрок в локальной таблице и музыка продолжает играть, контролируем громкость
+                                        if player:getEmitter():isPlaying(musicData["localmusicid"]) then
+                                            if -- (player:getPrimaryHandItem() and (player:getPrimaryHandItem():getID() == musicServerData["itemid"])) or
+                                                (musicPlayer and musicPlayer:getDeviceData() and
+                                                    musicPlayer:getDeviceData():getIsTurnedOn() and
+                                                    (musicPlayer:getDeviceData():getPower() > 0) and
+                                                    (musicPlayer:getID() == musicServerData["itemid"])) then
+                                                local koef = 0.4 -- коэффициент отвечающий за наличие наушников
+                                                if musicServerData["headphone"] then
+                                                    koef = 0.02
+                                                end
+                                                if musicData["volume"] ~= musicServerData["volume"] * koef then
+                                                    player:getEmitter():setVolume(musicData["localmusicid"],
+                                                        musicServerData["volume"] * koef)
+                                                    musicData["volume"] = musicServerData["volume"] * koef
+                                                end
+
+                                                -- если у игрока пропал проигрыватель из рук, отключаем музыку
+                                            else
+                                                ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
+                                                if isClient() then ModData.transmit("trueMusicData") end
+                                                player:getEmitter():stopSound(musicData["localmusicid"])
+                                                localPlayerMusicTable[musicId] = nil
                                             end
 
-                                            -- если у игрока пропал проигрыватель из рук, отключаем музыку
+                                            -- если музыка закончилась, отправляем информацию на сервер
                                         else
                                             ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
                                             if isClient() then ModData.transmit("trueMusicData") end
-                                            player:getEmitter():stopSound(musicData["localmusicid"])
                                             localPlayerMusicTable[musicId] = nil
                                         end
-
-                                        -- если музыка закончилась, отправляем информацию на сервер
-                                    else
-                                        ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                                        if isClient() then ModData.transmit("trueMusicData") end
-                                        localPlayerMusicTable[musicId] = nil
                                     end
                                 end
                             end
-                        end
 
-                        -- если игрок с музыкой вышел из игры или умер
-                    else
-                        if player and localPlayerMusicTable[musicId] then
-                            player:getEmitter():stopSound(localPlayerMusicTable[musicId]["localmusicid"])
+                            -- если игрок с музыкой вышел из игры или умер
+                        else
+                            if player and localPlayerMusicTable[musicId] then
+                                player:getEmitter():stopSound(localPlayerMusicTable[musicId]["localmusicid"])
+                            end
+                            ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
+                            if isClient() then ModData.transmit("trueMusicData") end
+                            localPlayerMusicTable[musicId] = nil
                         end
-                        ModData.getOrCreate("trueMusicData")["now_play"][musicId] = nil
-                        if isClient() then ModData.transmit("trueMusicData") end
-                        localPlayerMusicTable[musicId] = nil
                     end
                 end
             end
-        end
 
-        -- очищаем локальные таблицы от "фантомов", о которых не знает сервер
-        for musicId, musicClientData in pairs(localWoMusicTable) do
+            -- очищаем локальные таблицы от "фантомов", о которых не знает сервер
+            -- Clean local tables from "ghost" entries no longer present on the server.
+            --[[for musicId, musicClientData in pairs(localWoMusicTable) do
             if not ModData.getOrCreate("trueMusicData")["now_play"][musicId] then
                 -- print("Must be clear localWoMusicTable")
                 if musicClientData["obj"] then
@@ -366,9 +464,9 @@ function OnRenderTickClientCheckMusic()
                 end
                 localWoMusicTable[musicId] = nil
             end
-        end
+        end]] --
 
-        for musicId, musicClientData in pairs(localPlayerMusicTable) do
+            --[[for musicId, musicClientData in pairs(localPlayerMusicTable) do
             if not ModData.getOrCreate("trueMusicData")["now_play"][musicId] then
                 -- print("Must be clear localPlayerMusicTable")
                 local player = nil
@@ -384,11 +482,14 @@ function OnRenderTickClientCheckMusic()
                 end
                 localPlayerMusicTable[musicId] = nil
             end
+        end]] --
         end
     end
 end
 
 function startTrueMusicTick()
+    if TCM.__tick_music_started then return end
+    TCM.__tick_music_started = true
     Events.OnTick.Add(OnRenderTickClientCheckMusic)
 end
 
