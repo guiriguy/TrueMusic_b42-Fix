@@ -90,7 +90,7 @@ function TCFillContextMenu(player, context, worldobjects, test)
         if wO and instanceof(wO, "IsoRadio") then
             removeAllOptionsByName(context, deviceOptionText)
             option = context:addOptionOnTop(deviceOptionText, playerObj, activateDeviceOptions, wO)
-            --option.itemForTexture = wO
+            --option.itemForTexture = wO //Find another way of reference RadioID or item
             --context.tcmusic_device_options_added = true
             return
         end
