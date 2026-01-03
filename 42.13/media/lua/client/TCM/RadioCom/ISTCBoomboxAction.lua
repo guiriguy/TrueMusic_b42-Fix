@@ -235,6 +235,7 @@ function ISTCBoomboxAction:performTogglePlayMedia()
                     headphone = self.deviceData:getHeadphoneType() >= 0,
                     timestamp = "update",
                     musicName = self.device:getModData().tcmusic.mediaItem,
+                    startedAt = os.time() * 1000,
                 }
                 if self.device:getModData().tcmusic.deviceType == "InventoryItem" then
                     ModData.getOrCreate("trueMusicData")["now_play"][musicId]["itemid"] = self.device:getID()
@@ -265,6 +266,7 @@ function ISTCBoomboxAction:performTogglePlayMedia()
                     headphone = self.deviceData:getHeadphoneType() >= 0,
                     timestamp = "update",
                     musicName = self.device:getModData().tcmusic.mediaItem,
+                    startedAt = os.time() * 1000,
                 }
                 if self.device:getModData().tcmusic.deviceType == "InventoryItem" then
                     ModData.getOrCreate("trueMusicData")["now_play"][musicId]["itemid"] = self.device:getID()
