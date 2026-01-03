@@ -1,6 +1,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "TCMusicClientFunctions"
 require "TCM/Audio/ClientAudio"
+require "TCM/Debug"
 
 ISTCBoomboxAction = ISBaseTimedAction:derive("ISTCBoomboxAction")
 
@@ -197,7 +198,8 @@ function ISTCBoomboxAction:performTogglePlayMedia()
         self._lastPlayToggle = now
         if self.device:getModData().tcmusic.deviceType == "VehiclePart" then
             if self.device:getModData().tcmusic.isPlaying then
-                self.device:getVehicle():getEmitter():stopAll()
+                TCM.Debug.log("Car: ", self.character:getModData())
+                self.device:getVehicle():getEmitter():stopSoundByName(self.device:getModData().tcmusic.mediaItem)
                 sendClientCommand(self.character, 'truemusic', 'setMediaItemToVehiclePart',
                     { vehicle = self.device:getVehicle():getId(), mediaItem = self.device:getModData().tcmusic.mediaItem, isPlaying = false })
             elseif self.device:getVehicle():getEmitter() then
@@ -231,6 +233,7 @@ function ISTCBoomboxAction:performTogglePlayMedia()
                 self.character:getEmitter():setVolume(self.character:getModData().tcmusicid,
                     self.deviceData:getDeviceVolume() * 0.4)
                 ModData.getOrCreate("trueMusicData")["now_play"][musicId] = {
+                    sessionId = nil,
                     volume = self.deviceData:getDeviceVolume(),
                     headphone = self.deviceData:getHeadphoneType() >= 0,
                     timestamp = "update",
@@ -343,7 +346,7 @@ function ISTCBoomboxAction:performRemoveMedia()
         end
         if self.device:getModData().tcmusic.deviceType == "VehiclePart" then
             if self.device:getVehicle() and self.device:getVehicle():getEmitter() then
-                self.device:getVehicle():getEmitter():stopAll()
+                self.device:getVehicle():getEmitter():stopSoundByName(self.device:getModData().tcmusic.mediaItem)
             end
         else
             local emitter = self.deviceData:getEmitter()
