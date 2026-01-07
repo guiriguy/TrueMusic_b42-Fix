@@ -1,7 +1,8 @@
 require "TimedActions/ISBaseTimedAction"
-require "TCMusicClientFunctions"
+require "TCM/TCMusicClientFunctions"
 require "TCM/Audio/ClientAudio"
 require "TCM/Debug"
+
 
 ISTCBoomboxAction = ISBaseTimedAction:derive("ISTCBoomboxAction")
 
@@ -198,13 +199,15 @@ function ISTCBoomboxAction:performTogglePlayMedia()
         self._lastPlayToggle = now
         if self.device:getModData().tcmusic.deviceType == "VehiclePart" then
             if self.device:getModData().tcmusic.isPlaying then
-                TCM.Debug.log("Car: ", self.character:getModData())
-                self.device:getVehicle():getEmitter():stopSoundByName(self.device:getModData().tcmusic.mediaItem)
+                local emitter = self.device:getVehicle():getEmitter()
+                emitter:playSound("VehicleRadioButton")
                 sendClientCommand(self.character, 'truemusic', 'setMediaItemToVehiclePart',
                     { vehicle = self.device:getVehicle():getId(), mediaItem = self.device:getModData().tcmusic.mediaItem, isPlaying = false })
             elseif self.device:getVehicle():getEmitter() then
+                local emitter = self.device:getVehicle():getEmitter()
                 getSoundManager():StopMusic()
                 self.deviceData:setChannelRaw(100)
+                emitter:playSound("VehicleRadioButton")
                 sendClientCommand(self.character, 'truemusic', 'setMediaItemToVehiclePart',
                     { vehicle = self.device:getVehicle():getId(), mediaItem = self.device:getModData().tcmusic.mediaItem, isPlaying = true })
             end

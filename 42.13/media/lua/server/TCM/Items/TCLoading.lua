@@ -1,4 +1,4 @@
-require 'Items/SuburbsDistributions'
+require "Items/SuburbsDistributions"
 require "Items/ProceduralDistributions"
 require "Vehicles/VehicleDistributions"
 -- Thanks to Elf (https://steamcommunity.com/profiles/76561197967301191)

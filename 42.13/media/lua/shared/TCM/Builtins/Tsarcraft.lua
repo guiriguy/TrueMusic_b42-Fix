@@ -1,6 +1,5 @@
--- File: 42/media/lua/shared/builtins/Tsarcraft.lua
-TCM = TCM or {}
 require "TCM/Legacy/Bridge"
+TCM                = TCM or {}
 
 local cassetteBank = "tsarcraft_music_01_62"
 local vinylBank    = "tsarcraft_music_01_63"

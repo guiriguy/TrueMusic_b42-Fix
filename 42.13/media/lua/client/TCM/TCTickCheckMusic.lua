@@ -1,6 +1,6 @@
 -- @filename - TCTickCheckMusic.lua
 
-require "TCMusicClientFunctions"
+require "TCM/TCMusicClientFunctions"
 require "TM/Config"
 require "TCM/Audio/ClientAudio"
 
@@ -34,6 +34,21 @@ local function makeHandheldKey(musicId, msd)
     local itemid = msd and msd.itemid or ""
     local name = msd and msd.musicName or ""
     return tostring(musicId) .. "|" .. tostring(startedAt) .. "|" .. tostring(itemid) .. "|" .. tostring(name)
+end
+
+local function TCM_KillVanillaRadioNoise(emitter, isVehicle)
+    if not emitter then return end
+    if not emitter.stopSoundByName then return end
+
+    -- Objetos / radios en mundo
+    emitter:stopSoundByName("RadioStatic")
+    emitter:stopSoundByName("RadioTalk")
+
+    -- Vehículos (en algunos builds el “mumble/program” y el “static” van separados)
+    if isVehicle then
+        emitter:stopSoundByName("VehicleRadioStatic")
+        emitter:stopSoundByName("VehicleRadioProgram")
+    end
 end
 
 -- For SP and Host and MP(?)
@@ -89,8 +104,9 @@ function OnRenderTickClientCheckMusic()
                     vehicleRadio:getModData().tcmusic.isPlaying then
                     -- если найдено
                     -- If found.
-                    vehicle:updateParts(); -- Выполнить обновление деталей, тем самым, вызвав функцию на сервере Vehicle.Update.Radio
+                    --vehicle:updateParts(); -- Выполнить обновление деталей, тем самым, вызвав функцию на сервере Vehicle.Update.Radio
                     -- print("updateParts")
+
                     if not localVehicleMusicTable[vehicle:getSqlId()] then
                         -- если авто нет в локальной таблице, значит музыка не играет. Включаем музыку и записываем авто в таблицу.
                         -- If the vehicle is in the local table, we assume it is playing.

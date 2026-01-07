@@ -1,4 +1,4 @@
-require "TCMusicClientFunctions"
+require "TCM/TCMusicClientFunctions"
 
 TCMusic.oldISRadioWindow_activate = ISRadioWindow.activate
 function ISRadioWindow.activate(_player, _item, bol)

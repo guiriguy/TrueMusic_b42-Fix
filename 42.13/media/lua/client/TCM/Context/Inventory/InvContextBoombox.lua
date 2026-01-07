@@ -1,4 +1,4 @@
-require "TCMusicDefenitions"
+require "TCM/TCMusicDefenitions"
 require "TCM/Patches/DeviceOptionsFinalizer"
 
 ISInventoryMenuElements = ISInventoryMenuElements or {};

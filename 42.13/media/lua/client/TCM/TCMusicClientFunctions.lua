@@ -1,6 +1,6 @@
 --- @filename TCMusicClientFunctions.lua
 
-require "TCMusicDefenitions"
+require "TCM/TCMusicDefenitions"
 if TCM and TCM.__inv_context_loaded then return end
 TCM = TCM or {}
 TCM.__inv_context_loaded = true
